@@ -110,6 +110,19 @@ def addNewTetramino(fild, i, a, newFigure):
     except:
         return None
 
+def testLineDelete(fild):
+    lineSum = 0
+    for h in range(SIZE_Y - 1, -1, -1):
+        if(all(fild[h][x] == 1 for x in range(0, SIZE_X))):
+            lineSum += 1
+            for hc in range(h - 1, -1, -1):
+                for x in range(0, SIZE_X):
+                    fild[hc + 1][x] = 0
+                    fild[hc + 1][x] = fild[hc][x]
+    return [fild, lineSum]
+
+
+
 def genAllfilds(fild, newFigure):
     answer = []
     print(newFigure)
@@ -129,20 +142,27 @@ def areaWhitePercent(img):
     count = np.sum(img)
     return count / len(img) / len(img[0]) / 255 * 100
 
-def q(fild):
+def q(fildAndLines):
+    fild = fildAndLines[0]
     kh = 4
-    kd =  10
+    kd =  200
+    kLines = 300
+    kCount = 100000
     sum = 0
+
     closer = [0,0,0,0,0,0,0,0,0,0]
     for y in range(0, SIZE_Y):
         for x in range(0, SIZE_X):
             if(fild[y][x] == 1):
                 closer[x] = 1
-                sum += y * y * kh
+                sum += (y - 10)**3 * kh
 
             if (fild[y][x] == 0 and closer[x] == 1):
                 sum -= kd * (SIZE_Y - y + 1)
+    sum += fildAndLines[1] * kLines
+    sum -= np.sum(np.sum(fild)) * kCount
     return sum
+
 
 def nothing(x):
  pass
@@ -232,6 +252,9 @@ while True :# True:
     for i in range(0, SIZE_X):
         fildList[0][i] = 0
         fildList[1][i] = 0
+        fildList[2][i] = 0
+        fildList[3][i] = 0
+        fildList[4][i] = 0
 
     if(newFigure[0] != Tetramino.No):
         allPos = genAllfilds(fildList.copy(), newFigure[0])
@@ -240,7 +263,7 @@ while True :# True:
 
 
         for i in allPos:
-            answ = q(i[2])
+            answ = q(testLineDelete(i[2]))
             if(answ > maximum):
                 maximum = answ
                 optimum = i
@@ -253,11 +276,16 @@ while True :# True:
         #     print(a[0], a[1], q(a[2]))
         #     for i in a[2]:
         #         print(i)
-        print("\n\n\n\n")
+        # print("\n\n\n\n")
+        # for i in optimum[2]:
+        #     print(i)
+        # print(optimum[0], optimum[1], q(optimum[2]))
+        #
+        # for i in testLineDelete(optimum[2]):
+        #     print(i)
+
         if(control):
-            for i in optimum[2]:
-                print(i)
-            print(optimum[0], optimum[1], q(optimum[2]))
+
 
             print("a", optimum[1] )
             print(optimum[0] , newFigure[1])
