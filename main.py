@@ -33,17 +33,17 @@ class Tetramino(Enum):
 def getMatrix(type):
     if(type == Tetramino.I):
         answer = [[0, 1, 0,0],[0,1, 0,0],[0,1 ,0,0],[0,1, 0,0]]
-    if(type == Tetramino.J):
+    elif(type == Tetramino.J):
         answer = [[1, 1, 0],[0, 1, 0],[0 ,1, 0]]
-    if(type == Tetramino.L):
+    elif(type == Tetramino.L):
         answer = [[0, 1, 0],[0, 1, 0],[1 ,1, 0]]
-    if(type == Tetramino. O):
+    elif(type == Tetramino. O):
         answer = [[1, 1],[1, 1]]
-    if(type == Tetramino.Z):
+    elif(type == Tetramino.Z):
         answer = [[0, 1, 0],[1, 1, 0],[1 ,0, 0]]
-    if(type == Tetramino.T):
+    elif(type == Tetramino.T):
         answer = [[0, 1, 0],[1, 1, 0],[0 ,1, 0 ]]
-    if(type == Tetramino.S):
+    elif(type == Tetramino.S):
         answer = [[1, 0, 0],[1, 1, 0],[0, 1, 0]]
     return answer
 
@@ -76,11 +76,19 @@ def newTetramino(fild):
 
     return [Tetramino.No, 0]
 
+def copyMatrixOnFild(matrix, fild, i, h):
+    for xC in range(0, len(matrix)):
+        for yC in range(0, len(matrix[0])):
+            if (matrix[xC][yC] == 1):
+                fild[h + yC][i + xC] = 1;
+                if (i + xC < 0):
+                    return None
+    return fild
+
 
 
 def addNewTetramino(fild, i, a, newFigure):
     try:
-        #print(getMatrix(newFigure))
         matrix = np.rot90(getMatrix(newFigure), -a)
         buff = fild
         if(i == -1 and any(matrix[0][temp] == 1 for temp in len((matrix[0])))):
@@ -91,22 +99,9 @@ def addNewTetramino(fild, i, a, newFigure):
                 for y in range(0, len((matrix[0]))):
                     if(matrix[x][y] == 1):
                         if(h + y + 1 == SIZE_Y):
-                            for xC in range(0, len(matrix)):
-                                for yC in range(0, len(matrix[0])):
-                                    if (matrix[xC][yC] == 1):
-                                        buff[h + yC][i + xC] = 1;
-                                        if(i + xC < 0):
-                                            return None
-                            return buff
-
+                            return copyMatrixOnFild(matrix, buff, i, h)
                         if (buff[h + y + 1][i + x] == 1):
-                            for xC in range(0, len(matrix)):
-                                for yC in range(0, len(matrix[0])):
-                                    if (matrix[xC][yC] == 1):
-                                        buff[h + yC][i + xC] = 1;
-                                        if(i + xC < 0):
-                                            return None
-                            return buff
+                            return copyMatrixOnFild(matrix, buff, i, h)
     except:
         return None
 
@@ -122,8 +117,7 @@ def testLineDelete(fild):
     return [fild, lineSum]
 
 
-
-def genAllfilds(fild, newFigure):
+def genAllFilds(fild, newFigure):
     answer = []
     print(newFigure)
     for i in range(-3 ,12):
@@ -133,8 +127,6 @@ def genAllfilds(fild, newFigure):
             if(buff != None):
                 answer.append([i, a, buff]);
     return answer
-
-
 
 
 def areaWhitePercent(img):
@@ -229,25 +221,19 @@ def openCvGetFild():
         #cv2.imshow('nextBin', nextBin)
     return fildList
 
-# while( False):
-#     fildList = openCvGetFild()
-#     for i in range(0, SIZE_X):
-#         fildList[0][i] = 0
-#         fildList[1][i] = 0
-#         fildList[2][i] = 0
-#         fildList[3][i] = 0
-#     print(q(fildList))
-#     time.sleep(1)
+def getOptimalPosithion(pothithions):
+    optimalPothithion = pothithions[0]
+    maximum = -99999999999999
+    for i in pothithions:
+        answ = q(testLineDelete(i[2]))
+        if (answ > maximum):
+            maximum = answ
+            optimalPothithion = i
+    return optimalPothithion
 
-
-
-while True :# True:
+while True :
     fildList = openCvGetFild()
     newFigure = newTetramino(fildList)
-
-    #print(newFigure)
-
-
 
     for i in range(0, SIZE_X):
         fildList[0][i] = 0
@@ -257,91 +243,33 @@ while True :# True:
         fildList[4][i] = 0
 
     if(newFigure[0] != Tetramino.No):
-        allPos = genAllfilds(fildList.copy(), newFigure[0])
-        optimum = allPos[0]
-        maximum = -99999999999999
-
-
-        for i in allPos:
-            answ = q(testLineDelete(i[2]))
-            if(answ > maximum):
-                maximum = answ
-                optimum = i
-
-        #print(optimum[0], optimum[1])
-
-        # print("\n\n\n\n")
-        # for a in allPos:
-        #     print("\n\n\n\n")
-        #     print(a[0], a[1], q(a[2]))
-        #     for i in a[2]:
-        #         print(i)
-        # print("\n\n\n\n")
-        # for i in optimum[2]:
-        #     print(i)
-        # print(optimum[0], optimum[1], q(optimum[2]))
-        #
-        # for i in testLineDelete(optimum[2]):
-        #     print(i)
+        optimal = getOptimalPosithion(genAllFilds(fildList.copy(), newFigure[0]))
 
         if(control):
 
-
-            print("a", optimum[1] )
-            print(optimum[0] , newFigure[1])
-
             time.sleep(0.01)
-            for i in range(optimum[1]):
+            for i in range(optimal[1]):
                 pyautogui.press('z')
                 if (antiBan):
                     time.sleep(uniform(0.1, 0.3))
-                #time.sleep(0.1)
 
-
-            if(optimum[0] - newFigure[1] > 0):
-                print("r",optimum[0] - newFigure[1])
-                for i in range(optimum[0] - newFigure[1]):
+            if(optimal[0] - newFigure[1] > 0):
+                for i in range(optimal[0] - newFigure[1]):
                     pyautogui.press('right')
                     if (antiBan):
                         time.sleep(uniform(0.1, 0.3))
-                    print("right")
-                    #time.sleep(0.1)
 
-            if (optimum[0] - newFigure[1] < 0):
-                print("l", newFigure[1] - optimum[0])
-                for i in range(newFigure[1] - optimum[0]):
+            if (optimal[0] - newFigure[1] < 0):
+                for i in range(newFigure[1] - optimal[0]):
                     pyautogui.press('left')
                     if(antiBan):
                         time.sleep(uniform(0.1, 0.3 ))
-                    print("left")
-                    #
+
 
             pyautogui.press(' ')
             if(antiBan):
                 time.sleep(uniform(0.4, 0.5))
-        #pyautogui.press('down', 10)
 
     if cv2.waitKey(33) & 0xFF in (ord('q'),27,):
         break
 
-fildList = []
-for i in range(0, SIZE_Y):
-    fildList.append([0,0,0,0,0,0,0,0,0,0])
-
-
-fildList = addNewTetramino(fildList, 2, 1, Tetramino.I)
-#fildList = addNewTetramino(fildList, 0, 1, Tetramino.I)
-new = copy.deepcopy(fildList)
-answ = genAllfilds(new, Tetramino.I)
-
-for i in fildList:
-    print(i)
-
-#
-# print("\n\n\n\n")
-# for a in answ:
-#     for i in a[2]:
-#         print(i)
-#     print(q(a[2]),"\n\n\n\n" )
-#
-# print(id(fildList), id(new) )
