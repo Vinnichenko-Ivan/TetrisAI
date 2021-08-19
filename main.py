@@ -9,16 +9,27 @@ import copy
 from random import uniform
 from random import randint
 
-SIZE_X = 10
-SIZE_Y = 22
-debug = False
-graphic = False
-liner = True
-control = True
-antiBan = False
-soloGame = {'left': 653, 'top': 200 - 67 , 'width': 706, 'height': 746 + 67}
-low = np.array([0,0,110])
-high = np.array([255,255,255])
+class Setting():
+    SIZE_X = 10
+    SIZE_Y = 22
+    debug = False
+    graphic = False
+    liner = True
+    control = True
+    antiBan = False
+    soloGame = {'left': 653, 'top': 200 - 67 , 'width': 706, 'height': 746 + 67}
+    fildLeft = 175
+    fildTop = 80
+    fildRight = 511
+    fildBottom = 746+67
+    fildWeight = fildRight - fildLeft
+    fildHeight = fildBottom - fildTop
+    low = np.array([0,0,110])
+    high = np.array([255,255,255])
+    fildWeight = 511 - 175
+    fildHeight = 746 - 80 + 67
+
+setting = Setting()
 
 class Tetramino(Enum):
     I = 0
@@ -94,11 +105,11 @@ def addNewTetramino(fild, i, a, newFigure):
         if(i == -1 and any(matrix[0][temp] == 1 for temp in len((matrix[0])))):
             return None
 
-        for h in range(0,SIZE_Y):
+        for h in range(0, setting.SIZE_Y):
             for x in range(0, len(matrix)):
                 for y in range(0, len((matrix[0]))):
                     if(matrix[x][y] == 1):
-                        if(h + y + 1 == SIZE_Y):
+                        if(h + y + 1 == setting.SIZE_Y):
                             return copyMatrixOnFild(matrix, buff, i, h)
                         if (buff[h + y + 1][i + x] == 1):
                             return copyMatrixOnFild(matrix, buff, i, h)
@@ -107,11 +118,11 @@ def addNewTetramino(fild, i, a, newFigure):
 
 def testLineDelete(fild):
     lineSum = 0
-    for h in range(SIZE_Y - 1, -1, -1):
-        if(all(fild[h][x] == 1 for x in range(0, SIZE_X))):
+    for h in range(setting.SIZE_Y - 1, -1, -1):
+        if(all(fild[h][x] == 1 for x in range(0, setting.SIZE_X))):
             lineSum += 1
             for hc in range(h - 1, -1, -1):
-                for x in range(0, SIZE_X):
+                for x in range(0, setting.SIZE_X):
                     fild[hc + 1][x] = 0
                     fild[hc + 1][x] = fild[hc][x]
     return [fild, lineSum]
@@ -120,7 +131,7 @@ def testLineDelete(fild):
 def genAllFilds(fild, newFigure):
     answer = []
     print(newFigure)
-    for i in range(-3 ,12):
+    for i in range(-3 , setting.SIZE_X + 2):
         for a in range(0, 4):
             add = copy.deepcopy(fild)
             buff = addNewTetramino(add,  i , a, newFigure)
@@ -143,14 +154,14 @@ def q(fildAndLines):
     sum = 0
 
     closer = [0,0,0,0,0,0,0,0,0,0]
-    for y in range(0, SIZE_Y):
-        for x in range(0, SIZE_X):
+    for y in range(0, setting.SIZE_Y):
+        for x in range(0, setting.SIZE_X):
             if(fild[y][x] == 1):
                 closer[x] = 1
-                sum += (y - 10)**3 * kh
+                sum += (y - 10) * kh
 
             if (fild[y][x] == 0 and closer[x] == 1):
-                sum -= kd * (SIZE_Y - y + 1)
+                sum -= kd * (setting.SIZE_Y - y + 1)
     sum += fildAndLines[1] * kLines
     sum -= np.sum(np.sum(fild)) * kCount
     return sum
@@ -159,7 +170,7 @@ def q(fildAndLines):
 def nothing(x):
  pass
 
-if(debug):
+if(setting.debug):
     cv2.namedWindow('image')
     cv2.createTrackbar('H_H','image',0,255,nothing)
     cv2.createTrackbar('H_L','image',0,255,nothing)
@@ -169,7 +180,7 @@ if(debug):
     cv2.createTrackbar('V_L','image',0,255,nothing)
 
 def getScreenShotHSV():
-    screenShot = mss().grab(soloGame)
+    screenShot = mss().grab(setting.soloGame)
     img = np.array(Image.frombytes('RGB', (screenShot.width, screenShot.height), screenShot.rgb, ))
     img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     return img
@@ -177,41 +188,38 @@ def getScreenShotHSV():
 
 def openCvGetFild():
     img = getScreenShotHSV()
-    soloGame = {'left': 653, 'top': 200 - 67, 'width': 706, 'height': 746 + 67}
-    gameFild = img[80:(746+67), 175:511]
-    fildWeight = 511 - 175
-    fildHeight = 746 - 80 + 67
+    gameFild = img[setting.fildTop:setting.fildBottom, setting.fildLeft:setting.fildRight]
     #hold = img[106:207, 4:175]
     #next = img[0:746, 175:511]
-    if (debug):
-        high[0] = cv2.getTrackbarPos('H_H', 'image')
-        high[1] = cv2.getTrackbarPos('S_H', 'image')
-        high[2] = cv2.getTrackbarPos('V_H', 'image')
-        low[0] = cv2.getTrackbarPos('H_L', 'image')
-        low[1] = cv2.getTrackbarPos('S_L', 'image')
-        low[2] = cv2.getTrackbarPos('V_L', 'image')
+    if (setting.debug):
+        setting.high[0] = cv2.getTrackbarPos('H_H', 'image')
+        setting.high[1] = cv2.getTrackbarPos('S_H', 'image')
+        setting.high[2] = cv2.getTrackbarPos('V_H', 'image')
+        setting.low[0] = cv2.getTrackbarPos('H_L', 'image')
+        setting.low[1] = cv2.getTrackbarPos('S_L', 'image')
+        setting.low[2] = cv2.getTrackbarPos('V_L', 'image')
 
-    gameFildBin = cv2.inRange(gameFild, low, high)
+    gameFildBin = cv2.inRange(gameFild, setting.low, setting.high)
     #holdBin = cv2.inRange(hold, low, high)
     #nextBin = cv2.inRange(next, low, high)
 
     fildList = []
-    for i in range(0, SIZE_Y):
+    for i in range(0, setting.SIZE_Y):
         fildList.append([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
-    for y in range(0, SIZE_Y):
-        for x in range(0, SIZE_X):
+    for y in range(0, setting.SIZE_Y):
+        for x in range(0, setting.SIZE_X):
             a = 0
-            if (areaWhitePercent(gameFildBin[y * fildHeight // SIZE_Y:(y + 1) * fildHeight // SIZE_Y,
-                                 x * fildWeight // SIZE_X:(x + 1) * fildWeight // SIZE_X]) > 50):
+            if (areaWhitePercent(gameFildBin[y * setting.fildHeight // setting.SIZE_Y:(y + 1) * setting.fildHeight // setting.SIZE_Y,
+                                 x * setting.fildWeight // setting.SIZE_X:(x + 1) * setting.fildWeight // setting.SIZE_X]) > 50):
                 fildList[y][x] = 1
 
-    if (graphic):
-        if (liner):
-            for i in range(0, fildWeight, fildWeight // SIZE_X):
-                cv2.line(gameFildBin, (i, 0), (i, fildHeight), (255), thickness=1)
-            for i in range(0, fildHeight, fildHeight // SIZE_Y):
-                cv2.line(gameFildBin, (0, i), (fildWeight, i), (255), thickness=1)
+    if (setting.graphic):
+        if (setting.liner):
+            for i in range(0, setting.fildWeight, setting.fildWeight // setting.SIZE_X):
+                cv2.line(gameFildBin, (i, 0), (i, setting.fildHeight), (255), thickness=1)
+            for i in range(0, setting.fildHeight, setting.fildHeight // setting.SIZE_Y):
+                cv2.line(gameFildBin, (0, i), (setting.fildWeight, i), (255), thickness=1)
         #cv2.imshow('test', img)
         cv2.imshow('filg', gameFild)
         #cv2.imshow('hold', hold)
@@ -235,7 +243,7 @@ while True :
     fildList = openCvGetFild()
     newFigure = newTetramino(fildList)
 
-    for i in range(0, SIZE_X):
+    for i in range(0, setting.SIZE_X):
         fildList[0][i] = 0
         fildList[1][i] = 0
         fildList[2][i] = 0
@@ -245,29 +253,29 @@ while True :
     if(newFigure[0] != Tetramino.No):
         optimal = getOptimalPosithion(genAllFilds(fildList.copy(), newFigure[0]))
 
-        if(control):
+        if(setting.control):
 
             time.sleep(0.01)
             for i in range(optimal[1]):
                 pyautogui.press('z')
-                if (antiBan):
+                if (setting.antiBan):
                     time.sleep(uniform(0.1, 0.3))
 
             if(optimal[0] - newFigure[1] > 0):
                 for i in range(optimal[0] - newFigure[1]):
                     pyautogui.press('right')
-                    if (antiBan):
+                    if (setting.antiBan):
                         time.sleep(uniform(0.1, 0.3))
 
             if (optimal[0] - newFigure[1] < 0):
                 for i in range(newFigure[1] - optimal[0]):
                     pyautogui.press('left')
-                    if(antiBan):
+                    if(setting.antiBan):
                         time.sleep(uniform(0.1, 0.3 ))
 
 
             pyautogui.press(' ')
-            if(antiBan):
+            if(setting.antiBan):
                 time.sleep(uniform(0.4, 0.5))
 
     if cv2.waitKey(33) & 0xFF in (ord('q'),27,):
