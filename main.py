@@ -1,4 +1,6 @@
 import pyautogui
+import configparser
+import tkinter
 import time
 from enum import Enum
 import numpy as np
@@ -9,25 +11,116 @@ import copy
 from random import uniform
 from random import randint
 
+
+
+
 class Setting():
+    askScreenPos = False
     SIZE_X = 10
     SIZE_Y = 22
     debug = False
     graphic = False
-    liner = True
+    liner = False
     control = True
     antiBan = False
-    soloGame = {'left': 653, 'top': 200 - 67 , 'width': 706, 'height': 746 + 67}
-    fildLeft = 175
-    fildTop = 80
-    fildRight = 511
-    fildBottom = 746+67
+    soloGame = {'left': 0, 'top': 0 , 'width': 0, 'height': 0}
+    fildLeft = 0
+    fildTop = 0
+    fildRight = 0
+    fildBottom = 0
     fildWeight = fildRight - fildLeft
     fildHeight = fildBottom - fildTop
     low = np.array([0,0,110])
     high = np.array([255,255,255])
     fildWeight = 511 - 175
     fildHeight = 746 - 80 + 67
+
+    mouseXStart = 0
+    mouseYStart = 0
+    mouseXEnd = 0
+    mouseYEnd = 0
+    mouseX = 0
+    mouseY = 0
+    rectGetted = False
+
+    def mouseCallBack(self, event, x, y, flags, param):
+        if event == cv2.EVENT_LBUTTONDOWN:
+            self.mouseXStart = x
+            self.mouseYStart = y
+        elif event == cv2.EVENT_LBUTTONUP:
+            self.mouseXEnd = x
+            self.mouseYEnd = y
+            self.rectGetted = True
+        elif event == cv2.EVENT_MOUSEMOVE:
+            self.mouseX = x
+            self.mouseY = y
+        print('mouse')
+
+    def __init__(self):
+        config = configparser.ConfigParser()
+        config.sections()
+        config.read('conf.ini')
+        self.askScreenPos = "getWindowSize" in config["SCREEN"]
+        if("UseConfWindowSize" in config["SCREEN"]):
+            self.soloGame['left'] = int(config['SCREEN']['left'])
+            self.soloGame['top'] = int(config['SCREEN']['top'])
+            self.soloGame['width'] = int(config['SCREEN']['width'])
+            self.soloGame['height'] = int(config['SCREEN']['height'])
+            self.fildLeft = int(config['SCREEN']['fildLeft'])
+            self.fildTop = int(config['SCREEN']['fildTop'])
+            self.fildRight = int(config['SCREEN']['fildRight'])
+            self.fildBottom = int(config['SCREEN']['fildBottom'])
+            self.fildWeight = self.fildRight - self.fildLeft
+            self.fildHeight = self.fildBottom - self.fildTop
+        self.debug = "debug" in config["DEBUG"]
+        self.graphic = "graphic" in config["DEBUG"]
+        self.liner = "liner" in config["DEBUG"]
+
+
+
+        if(self.askScreenPos):
+            root = tkinter.Tk()
+            root.withdraw()
+            WIDTH, HEIGHT = root.winfo_screenwidth(), root.winfo_screenheight()
+            print(WIDTH, HEIGHT)
+            allScreen = {'left': 0, 'top': 0, 'width': WIDTH, 'height': HEIGHT}
+            screenShot = mss().grab(allScreen)
+            img = np.array(Image.frombytes('RGB', (screenShot.width, screenShot.height), screenShot.rgb, ))
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+            cv2.imshow('test', img)
+            cv2.setMouseCallback('test', self.mouseCallBack)
+            while(not self.rectGetted):
+                cv2.imshow('test', img)
+                if cv2.waitKey(33) & 0xFF in (ord('q'), 27,):
+                     break
+
+            self.soloGame['left'] = self.mouseXStart
+            self.soloGame['top'] = self.mouseYStart
+            self.soloGame['width'] = self.mouseXEnd - self.mouseXStart
+            self.soloGame['height'] = self.mouseYEnd - self.mouseYStart
+            self.mouseXStart = 0
+            self.mouseYStart = 0
+
+            self.rectGetted = False
+            while(not self.rectGetted):
+                screenShot = mss().grab(self.soloGame)
+                img = np.array(Image.frombytes('RGB', (screenShot.width, screenShot.height), screenShot.rgb, ))
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+                cv2.rectangle(img, (self.mouseXStart, self.mouseYStart), (self.mouseX, self.mouseY), (0, 255, 0), 5)
+                cv2.imshow('test', img)
+
+                if cv2.waitKey(33) & 0xFF in (ord('q'), 27,):
+                    break
+
+            self.fildLeft = self.mouseXStart
+            self.fildTop = self.mouseYStart
+            self.fildRight = self.mouseXEnd
+            self.fildBottom = self.mouseYEnd
+            self.fildWeight = self.fildRight - self.fildLeft
+            self.fildHeight = self.fildBottom - self.fildTop
+            cv2.destroyWindow("test")
+
+
 
 setting = Setting()
 
