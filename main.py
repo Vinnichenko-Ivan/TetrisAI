@@ -240,22 +240,63 @@ def areaWhitePercent(img):
 
 def q(fildAndLines):
     fild = fildAndLines[0]
-    kh = 4
-    kd =  200
-    kLines = 300
-    kCount = 100000
+    kh = 5
+    kd =  10000000
+    kMaxHeight = 100
+    kLines = 1000000
+    kCount = 1
     sum = 0
+    kPit = 10000
 
-    closer = [0,0,0,0,0,0,0,0,0,0]
+    closer = []
+    for x in range(0, setting.SIZE_X):
+        closer.append(0)
+
     for y in range(0, setting.SIZE_Y):
         for x in range(0, setting.SIZE_X):
             if(fild[y][x] == 1):
-                closer[x] = 1
-                sum += (y - 10) * kh
+                closer[x] += 1
+                sum -= (setting.SIZE_Y - y) * kh
 
-            if (fild[y][x] == 0 and closer[x] == 1):
-                sum -= kd * (setting.SIZE_Y - y + 1)
-    sum += fildAndLines[1] * kLines
+            if (fild[y][x] == 0 and closer[x] != 0):
+                sum -= kd
+
+    high = []
+    for x in range(0, setting.SIZE_X):
+        high.append(0)
+    for x in range(0, setting.SIZE_X):
+        for y in range(0, setting.SIZE_Y):
+            if(fild[y][x] == 1):
+                high[x] = (setting.SIZE_Y - y)
+                break
+    sum -= kMaxHeight*max(high)
+    countPit = 0
+    pitHigh = 1
+    pitMass = []
+    for x in range(0, setting.SIZE_X):
+        pitMass.append(0)
+    for x in range(0, setting.SIZE_X):
+        if(x == 0):
+            if(high[1] - high[0] > pitHigh):
+                pitMass[x] = high[1] - high[0]
+        elif (x == setting.SIZE_X - 1):
+            if (high[setting.SIZE_X - 2] - high[setting.SIZE_X - 1] > pitHigh):
+                # pitMass[x] = high[setting.SIZE_X - 2] - high[setting.SIZE_X - 1]
+                a = 0
+        elif(max(high[x - 1] - high[x], high[x + 1] - high[x]) > pitHigh):
+            pitMass[x] = max(high[x - 1] - high[x], high[x + 1] - high[x])
+
+    for i in pitMass:
+        sum -= max((i - pitHigh), 0) * kPit
+
+    for y in range(0, setting.SIZE_Y):
+        if(np.sum(fild[y]) != 0):
+            sum -= kMaxHeight * y
+            break
+
+
+
+    sum += ((fildAndLines[1]) * kLines)
     sum -= np.sum(np.sum(fild)) * kCount
     return sum
 
